@@ -11,6 +11,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -68,6 +69,7 @@ import java.util.regex.Pattern;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
@@ -319,6 +321,17 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
         registerForContextMenu(mTerminalView);
 
         Intent serviceIntent = new Intent(this, TermuxService.class);
+        String intentData = getIntent().getDataString();
+        if (intentData != null) {
+            parseUserlandIntent(intentData);
+        }
+
+        serviceIntent.putExtra("username", username);
+        serviceIntent.putExtra("hostname", hostname);
+        serviceIntent.putExtra("port", port);
+        serviceIntent.putExtra("sessionName", sessionName);
+        serviceIntent.setAction(TermuxService.ACTION_EXECUTE);
+
         // Start the service and make it run regardless of who is bound to it:
         startService(serviceIntent);
         if (!bindService(serviceIntent, this, 0))
@@ -330,6 +343,52 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
 
         sendOpenedBroadcast();
     }
+
+    /** Parse intent for connection parameters **/
+    private String username = "";
+    private String hostname = "";
+    private String port = "";
+    private String sessionName = "";
+
+    private void parseUserlandIntent(String intentData) {
+        String regexPattern = "ssh://([\\w\\W]+)@([\\w\\W]+):([\\d]+)/#([\\w\\W]+)";
+        Pattern pattern = Pattern.compile(regexPattern);
+
+        try {
+            Matcher matcher = pattern.matcher(intentData);
+            if (matcher.groupCount() < 4) {
+                return;
+            }
+
+            if (matcher.find()) {
+                username = matcher.group(1);
+                hostname = matcher.group(2);
+                port = matcher.group(3);
+                sessionName = matcher.group(4);
+            }
+        } catch (Exception e) {
+            showErrorAndGoBackToUserland(R.string.error_regex_parsing, e.getMessage());
+        }
+    }
+
+    void showErrorAndGoBackToUserland(@StringRes int resId, String extraInfo) {
+        Context appContext = getApplicationContext();
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        String errorMessage = appContext.getString(resId);
+
+        alertDialogBuilder.setTitle(R.string.dialog_error_title)
+            .setMessage(errorMessage + ", " + extraInfo)
+            .setCancelable(true)
+            .setPositiveButton(R.string.button_exit, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // if this button is clicked, close current activity
+                    TermuxActivity.this.finish();
+                }
+            });
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+    }
+
 
     /**
      * Send a broadcast notifying Termux app has been opened
@@ -512,8 +571,7 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
 
         if (mTermService.getSessions().isEmpty()) {
             if (mIsVisible) {
-                TermuxInstaller.setupIfNeeded(TermuxActivity.this, () -> {
-                    if (mTermService == null) return; // Activity might have been destroyed.
+                if (mTermService == null) return; // Activity might have been destroyed.
                     try {
                         Bundle bundle = getIntent().getExtras();
                         boolean launchFailsafe = false;
@@ -524,7 +582,6 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
                     } catch (WindowManager.BadTokenException e) {
                         // Activity finished - ignore.
                     }
-                });
             } else {
                 // The service connected while not in foreground - just bail out.
                 finish();

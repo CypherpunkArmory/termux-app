@@ -67,6 +67,8 @@ final class TermuxPreferences {
     private boolean mScreenAlwaysOn;
     private int mFontSize;
 
+    private String home_path;
+
     @AsciiBellBehaviour
     int mBellBehaviour = BELL_VIBRATE;
 
@@ -86,6 +88,8 @@ final class TermuxPreferences {
     }
 
     TermuxPreferences(Context context) {
+        home_path = context.getFilesDir().getAbsolutePath() + "/home";
+
         reloadFromProperties(context);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
@@ -156,9 +160,9 @@ final class TermuxPreferences {
     }
 
     void reloadFromProperties(Context context) {
-        File propsFile = new File(TermuxService.HOME_PATH + "/.termux/termux.properties");
+        File propsFile = new File(home_path + "/.termux/termux.properties");
         if (!propsFile.exists())
-            propsFile = new File(TermuxService.HOME_PATH + "/.config/termux/termux.properties");
+            propsFile = new File(home_path + "/.config/termux/termux.properties");
 
         Properties props = new Properties();
         try {

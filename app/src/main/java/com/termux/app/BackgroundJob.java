@@ -33,10 +33,10 @@ public final class BackgroundJob {
     }
 
     public BackgroundJob(String cwd, String fileToExecute, final String[] args, final TermuxService service, PendingIntent pendingIntent) {
-        String[] env = buildEnvironment(false, cwd);
-        if (cwd == null) cwd = TermuxService.HOME_PATH;
+        String[] env = buildEnvironment(false, cwd, service.filesPath, service.homePath, service.prefixPath);
+        if (cwd == null) cwd = service.homePath;
 
-        final String[] progArray = setupProcessArgs(fileToExecute, args);
+        final String[] progArray = setupProcessArgs(fileToExecute, args, service.prefixPath);
         final String processDescription = Arrays.toString(progArray);
 
         Process process;
@@ -131,17 +131,17 @@ public final class BackgroundJob {
         }
     }
 
-    static String[] buildEnvironment(boolean failSafe, String cwd) {
-        new File(TermuxService.HOME_PATH).mkdirs();
+    public static String[] buildEnvironment(boolean failSafe, String cwd, String files_path, String home_path, String prefix_path) {
+        new File(home_path).mkdirs();
 
-        if (cwd == null) cwd = TermuxService.HOME_PATH;
+        if (cwd == null) cwd = home_path;
 
         List<String> environment = new ArrayList<>();
 
         environment.add("TERM=xterm-256color");
         environment.add("COLORTERM=truecolor");
-        environment.add("HOME=" + TermuxService.HOME_PATH);
-        environment.add("PREFIX=" + TermuxService.PREFIX_PATH);
+        environment.add("HOME=" + home_path);
+        environment.add("PREFIX=" + prefix_path);
         environment.add("BOOTCLASSPATH=" + System.getenv("BOOTCLASSPATH"));
         environment.add("ANDROID_ROOT=" + System.getenv("ANDROID_ROOT"));
         environment.add("ANDROID_DATA=" + System.getenv("ANDROID_DATA"));
@@ -160,10 +160,11 @@ public final class BackgroundJob {
             // Keep the default path so that system binaries can be used in the failsafe session.
             environment.add("PATH= " + System.getenv("PATH"));
         } else {
+            environment.add("LD_LIBRARY_PATH=" + files_path + "/support");
             environment.add("LANG=en_US.UTF-8");
-            environment.add("PATH=" + TermuxService.PREFIX_PATH + "/bin");
+            environment.add("PATH=" + prefix_path + "/bin");
             environment.add("PWD=" + cwd);
-            environment.add("TMPDIR=" + TermuxService.PREFIX_PATH + "/tmp");
+            environment.add("TMPDIR=" + prefix_path + "/tmp");
         }
 
         return environment.toArray(new String[0]);
@@ -183,7 +184,7 @@ public final class BackgroundJob {
         }
     }
 
-    static String[] setupProcessArgs(String fileToExecute, String[] args) {
+    static String[] setupProcessArgs(String fileToExecute, String[] args, String prefix_path) {
         // The file to execute may either be:
         // - An elf file, in which we execute it directly.
         // - A script file without shebang, which we execute with our standard shell $PREFIX/bin/sh instead of the
@@ -212,7 +213,7 @@ public final class BackgroundJob {
                                     if (executable.startsWith("/usr") || executable.startsWith("/bin")) {
                                         String[] parts = executable.split("/");
                                         String binary = parts[parts.length - 1];
-                                        interpreter = TermuxService.PREFIX_PATH + "/bin/" + binary;
+                                        interpreter = prefix_path + "/bin/" + binary;
                                     }
                                     break;
                                 }
@@ -222,7 +223,7 @@ public final class BackgroundJob {
                         }
                     } else {
                         // No shebang and no ELF, use standard shell.
-                        interpreter = TermuxService.PREFIX_PATH + "/bin/sh";
+                        interpreter = prefix_path + "/bin/sh";
                     }
                 }
             }

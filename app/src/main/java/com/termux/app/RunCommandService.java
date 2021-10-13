@@ -159,9 +159,9 @@ public class RunCommandService extends Service {
     }
 
     private boolean allowExternalApps() {
-        File propsFile = new File(TermuxService.HOME_PATH + "/.termux/termux.properties");
+        File propsFile = new File(TermuxService.homePath + "/.termux/termux.properties");
         if (!propsFile.exists())
-            propsFile = new File(TermuxService.HOME_PATH + "/.config/termux/termux.properties");
+            propsFile = new File(TermuxService.homePath + "/.config/termux/termux.properties");
 
         Properties props = new Properties();
         try {
@@ -180,8 +180,8 @@ public class RunCommandService extends Service {
     /** Replace "$PREFIX/" or "~/" prefix with termux absolute paths */
     private String parsePath(String path) {
         if(path != null && !path.isEmpty()) {
-            path = path.replaceAll("^\\$PREFIX\\/", TermuxService.PREFIX_PATH + "/");
-            path = path.replaceAll("^~\\/", TermuxService.HOME_PATH + "/");
+            path = path.replaceAll("^\\$PREFIX\\/", TermuxService.prefixPath + "/");
+            path = path.replaceAll("^~\\/", TermuxService.homePath + "/");
         }
 
         return path;

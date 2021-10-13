@@ -1,6 +1,4 @@
-plugins {
-  id "com.android.application"
-}
+apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion project.properties.compileSdkVersion.toInteger()
@@ -14,7 +12,6 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.termux"
         minSdkVersion project.properties.minSdkVersion.toInteger()
         targetSdkVersion project.properties.targetSdkVersion.toInteger()
         versionCode 106
@@ -44,7 +41,6 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
 
@@ -81,12 +77,12 @@ dependencies {
 }
 
 task versionName {
-  doLast {
-    print android.defaultConfig.versionName
-  }
+    doLast {
+        print android.defaultConfig.versionName
+    }
 }
 
-def downloadBootstrap(String arch, String expectedChecksum, int version) {
+def downloadBootstrap(String arch, String expectedChecksum, String version) {
     def digest = java.security.MessageDigest.getInstance("SHA-256")
 
     def localUrl = "src/main/cpp/bootstrap-" + arch + ".zip"
@@ -108,7 +104,7 @@ def downloadBootstrap(String arch, String expectedChecksum, int version) {
         }
     }
 
-    def remoteUrl = "https://bintray.com/termux/bootstrap/download_file?file_path=bootstrap-" + arch + "-v" + version + ".zip"
+    def remoteUrl = "https://github.com/termux/termux-packages/releases/download/bootstrap-" + version + "/bootstrap-" + arch + ".zip"
     logger.quiet("Downloading " + remoteUrl + " ...")
 
     file.parentFile.mkdirs()
@@ -135,18 +131,18 @@ clean {
     }
 }
 
-task downloadBootstraps(){
+task downloadBootstraps() {
     doLast {
-        def version = 35
-        downloadBootstrap("aarch64", "6707cc641cde13dc2f24e819cd8ca3f1a9a003577523c25beff72690588594f5", version)
-        downloadBootstrap("arm",     "eadc9afb52900dc744fdb39ed0c3dbb87ad8ce6190b27946467df7aeab353fa7", version)
-        downloadBootstrap("i686",    "b674ef43c8388dd19e0d25b024b5792c8532ee0ddcc49f90c0716042724fa905", version)
-        downloadBootstrap("x86_64",  "86043eb76efededbdf5644686a899f4d762703fe18e23fb906a2482d593d7549", version)
+        def version = "2021.10.03-r1"
+        downloadBootstrap("aarch64", "abba0bab1155ca081b96556f5ac69c7f85f332f67665503fc488a82338a739de", version)
+        downloadBootstrap("arm",     "3ab34567d69be26183f1bd30b2a9a20fb8d95c4217c55fbe4ea0dda92f9ebc35", version)
+        downloadBootstrap("i686",    "fda0463b7a448362d91f56448518eae9985f3d069e24608e17c2c66097993037", version)
+        downloadBootstrap("x86_64",  "de38b87a74760b268eb5f6ae289edd3fc5b3c86e02cb32f5f4a863161f4de354", version)
     }
 }
 
 afterEvaluate {
-  android.applicationVariants.all { variant ->
-    variant.javaCompileProvider.get().dependsOn(downloadBootstraps)
-  }
+    android.libraryVariants.all { variant ->
+        variant.javaCompileProvider.get().dependsOn(downloadBootstraps)
+    }
 }
