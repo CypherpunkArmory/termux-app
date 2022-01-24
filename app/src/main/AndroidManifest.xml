@@ -35,16 +35,18 @@
 	        android:configChanges="orientation|screenSize|smallestScreenSize|density|screenLayout|uiMode|keyboard|keyboardHidden|navigation"
             android:launchMode="singleInstance"
             android:resizeableActivity="true"
-	        android:windowSoftInputMode="adjustResize|stateAlwaysVisible" >
+	        android:windowSoftInputMode="adjustResize|stateAlwaysVisible"
+            android:exported="false"
+            >
             <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
 
             <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
 
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
 
                 <data android:scheme="ssh"/>
+
             </intent-filter>
         </activity>
 
@@ -54,7 +56,7 @@
 
         <service
             android:name=".app.RunCommandService"
-            android:exported="true"
+            android:exported="false"
             android:permission="com.termux.permission.RUN_COMMAND" >
             <intent-filter>
                 <action android:name="com.termux.RUN_COMMAND" />
