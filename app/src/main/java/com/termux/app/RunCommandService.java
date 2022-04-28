@@ -128,8 +128,8 @@ public class RunCommandService extends Service {
 
     private Notification buildNotification() {
         Notification.Builder builder = new Notification.Builder(this);
-        builder.setContentTitle(getText(R.string.application_name) + " Run Command");
-        builder.setSmallIcon(R.drawable.ic_service_notification);
+        builder.setContentTitle(getText(tech.ula.customlibrary.R.string.app_name) + " Run Command");
+        builder.setSmallIcon(tech.ula.customlibrary.R.drawable.ic_stat_icon);
 
         // Use a low priority:
         builder.setPriority(Notification.PRIORITY_LOW);

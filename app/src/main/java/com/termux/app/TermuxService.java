@@ -79,6 +79,7 @@ public final class TermuxService extends Service implements SessionChangedCallba
     String hostname = "";
     String port = "";
     String sessionName = "";
+    String password = "";
 
     /**
      * The terminal sessions which this service manages.
@@ -134,11 +135,12 @@ public final class TermuxService extends Service implements SessionChangedCallba
             }
         } else if (ACTION_EXECUTE.equals(action)) {
             username = intent.getStringExtra("username");
+            password = intent.getStringExtra("password");
             hostname = intent.getStringExtra("hostname");
             port = intent.getStringExtra("port");
             sessionName = intent.getStringExtra("sessionName");
 
-            if (username.isEmpty() || hostname.isEmpty() || port.isEmpty() || sessionName.isEmpty()) {
+            if (username.isEmpty() || password.isEmpty() || hostname.isEmpty() || port.isEmpty() || sessionName.isEmpty()) {
                 Log.e(EmulatorDebug.LOG_TAG, "Currently only intents from UserLAnd are supported");
             } else {
                 // Launch the main Termux app, which will now show the current session:
@@ -197,9 +199,9 @@ public final class TermuxService extends Service implements SessionChangedCallba
         if (wakeLockHeld) contentText += " (wake lock held)";
 
         Notification.Builder builder = new Notification.Builder(this);
-        builder.setContentTitle(getText(R.string.application_name));
+        builder.setContentTitle(getText(tech.ula.customlibrary.R.string.app_name));
         builder.setContentText(contentText);
-        builder.setSmallIcon(R.drawable.ic_service_notification);
+        builder.setSmallIcon(tech.ula.customlibrary.R.drawable.ic_stat_icon);
         builder.setContentIntent(pendingIntent);
         builder.setOngoing(true);
         builder.setGroup(GROUP_KEY_USERLAND);
@@ -253,7 +255,7 @@ public final class TermuxService extends Service implements SessionChangedCallba
 
         if (cwd == null) cwd = homePath;
 
-        String[] env = BackgroundJob.buildEnvironment(failSafe, cwd, filesPath, homePath, prefixPath);
+        String[] env = BackgroundJob.buildEnvironment(failSafe, cwd, filesPath, homePath, prefixPath, password);
         boolean isLoginShell = false;
 
         for (String shellBinary : new String[]{"busybox"}) {

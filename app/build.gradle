@@ -74,6 +74,9 @@ android {
 dependencies {
     testImplementation 'junit:junit:4.13.1'
     testImplementation 'org.robolectric:robolectric:4.4'
+
+    //Use custom library contents
+    implementation project(':CustomLibrary')
 }
 
 task versionName {

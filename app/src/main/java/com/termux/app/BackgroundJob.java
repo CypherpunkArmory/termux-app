@@ -33,7 +33,7 @@ public final class BackgroundJob {
     }
 
     public BackgroundJob(String cwd, String fileToExecute, final String[] args, final TermuxService service, PendingIntent pendingIntent) {
-        String[] env = buildEnvironment(false, cwd, service.filesPath, service.homePath, service.prefixPath);
+        String[] env = buildEnvironment(false, cwd, service.filesPath, service.homePath, service.prefixPath, "");
         if (cwd == null) cwd = service.homePath;
 
         final String[] progArray = setupProcessArgs(fileToExecute, args, service.prefixPath);
@@ -131,7 +131,7 @@ public final class BackgroundJob {
         }
     }
 
-    public static String[] buildEnvironment(boolean failSafe, String cwd, String files_path, String home_path, String prefix_path) {
+    public static String[] buildEnvironment(boolean failSafe, String cwd, String files_path, String home_path, String prefix_path, String password) {
         new File(home_path).mkdirs();
 
         if (cwd == null) cwd = home_path;
@@ -165,6 +165,7 @@ public final class BackgroundJob {
             environment.add("PATH=" + prefix_path + "/bin");
             environment.add("PWD=" + cwd);
             environment.add("TMPDIR=" + prefix_path + "/tmp");
+            environment.add("DROPBEAR_PASSWORD=" + password);
         }
 
         return environment.toArray(new String[0]);

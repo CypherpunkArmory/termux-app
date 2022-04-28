@@ -327,6 +327,7 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
         }
 
         serviceIntent.putExtra("username", username);
+        serviceIntent.putExtra("password", password);
         serviceIntent.putExtra("hostname", hostname);
         serviceIntent.putExtra("port", port);
         serviceIntent.putExtra("sessionName", sessionName);
@@ -346,17 +347,18 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
 
     /** Parse intent for connection parameters **/
     private String username = "";
+    private String password = "";
     private String hostname = "";
     private String port = "";
     private String sessionName = "";
 
     private void parseUserlandIntent(String intentData) {
-        String regexPattern = "ssh://([\\w\\W]+)@([\\w\\W]+):([\\d]+)/#([\\w\\W]+)";
+        String regexPattern = "ssh://([\\w\\W]+)@([\\w\\W]+):([\\d]+)/#([\\w\\W]+)/([\\w\\W]+)";
         Pattern pattern = Pattern.compile(regexPattern);
 
         try {
             Matcher matcher = pattern.matcher(intentData);
-            if (matcher.groupCount() < 4) {
+            if (matcher.groupCount() < 5) {
                 return;
             }
 
@@ -365,6 +367,7 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
                 hostname = matcher.group(2);
                 port = matcher.group(3);
                 sessionName = matcher.group(4);
+                password = matcher.group(5);
             }
         } catch (Exception e) {
             showErrorAndGoBackToUserland(R.string.error_regex_parsing, e.getMessage());
