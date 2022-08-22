@@ -72,3 +72,5 @@ all currently installed plugins.
 
 - Android Terminal Emulator: Android terminal app which Termux terminal handling
   is based on. Inactive. [Source](https://github.com/jackpal/Android-Terminal-Emulator).
+  
+Build
