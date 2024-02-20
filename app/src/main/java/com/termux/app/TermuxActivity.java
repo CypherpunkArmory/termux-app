@@ -59,8 +59,10 @@ import com.termux.view.TerminalView;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Properties;
@@ -325,6 +327,14 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
         if (intentData != null) {
             parseUserlandIntent(intentData);
         }
+        if (getIntent().hasExtra("command")) {
+            ArrayList<String> command = getIntent().getStringArrayListExtra("command");
+            serviceIntent.putStringArrayListExtra("command", command);
+        }
+        if (getIntent().hasExtra("env")) {
+            HashMap<String, String> env = (HashMap<String, String>) getIntent().getSerializableExtra("env");
+            serviceIntent.putExtra("env", env);
+        }
 
         serviceIntent.putExtra("username", username);
         serviceIntent.putExtra("password", password);
@@ -353,6 +363,7 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
     private String sessionName = "";
 
     private void parseUserlandIntent(String intentData) {
+
         String regexPattern = "ssh://([\\w\\W]+)@([\\w\\W]+):([\\d]+)/#([\\w\\W]+)/([\\w\\W]+)";
         Pattern pattern = Pattern.compile(regexPattern);
 

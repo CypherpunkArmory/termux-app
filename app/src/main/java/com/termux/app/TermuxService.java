@@ -28,6 +28,9 @@ import com.termux.terminal.TerminalSession.SessionChangedCallback;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -80,6 +83,8 @@ public final class TermuxService extends Service implements SessionChangedCallba
     String port = "";
     String sessionName = "";
     String password = "";
+    private HashMap<String, String> intentEnv = null;
+    private ArrayList<String> intentCommand = null;
 
     /**
      * The terminal sessions which this service manages.
@@ -139,8 +144,14 @@ public final class TermuxService extends Service implements SessionChangedCallba
             hostname = intent.getStringExtra("hostname");
             port = intent.getStringExtra("port");
             sessionName = intent.getStringExtra("sessionName");
+            if (intent.hasExtra("command")) {
+                intentCommand = intent.getStringArrayListExtra("command");
+            }
+            if (intent.hasExtra("env")) {
+                intentEnv = (HashMap<String, String>) intent.getSerializableExtra("env");
+            }
 
-            if (username.isEmpty() || password.isEmpty() || hostname.isEmpty() || port.isEmpty() || sessionName.isEmpty()) {
+            if ((username.isEmpty() || password.isEmpty() || hostname.isEmpty() || port.isEmpty() || sessionName.isEmpty()) && (intentCommand == null)) {
                 Log.e(EmulatorDebug.LOG_TAG, "Currently only intents from UserLAnd are supported");
             } else {
                 // Launch the main Termux app, which will now show the current session:
@@ -164,8 +175,8 @@ public final class TermuxService extends Service implements SessionChangedCallba
     public void onCreate() {
         filesPath = this.getFilesDir().getAbsolutePath();
         supportPath = filesPath + "/support/";
-        prefixPath = filesPath + "/usr";
-        homePath = filesPath + "/home";
+        prefixPath = filesPath + "/1" + "/usr";
+        homePath = filesPath + "/1" + "/home";
         startForeground(NOTIFICATION_ID, buildNotification());
     }
 
@@ -255,7 +266,17 @@ public final class TermuxService extends Service implements SessionChangedCallba
 
         if (cwd == null) cwd = homePath;
 
-        String[] env = BackgroundJob.buildEnvironment(failSafe, cwd, filesPath, homePath, prefixPath, password);
+        String[] env = BackgroundJob.buildEnvironment(failSafe, cwd, filesPath, "/home", prefixPath, password);
+        if (intentEnv != null) {
+            List<String> newEnv = new ArrayList<>(env.length + intentEnv.size());
+            Collections.addAll(newEnv, env);
+            intentEnv.forEach(
+                (key, value)
+                    -> newEnv.add(key + "=" + value)
+            );
+            env = newEnv.toArray(new String[0]);
+            Log.d("direct client env", Arrays.toString(env));
+        }
         boolean isLoginShell = false;
 
         for (String shellBinary : new String[]{"busybox"}) {
@@ -266,9 +287,15 @@ public final class TermuxService extends Service implements SessionChangedCallba
             break;
         }
 
-        // TODO: Replace -y -y option with a way to support hostkey checking
-        String[] dbclientArgs = {"sh", "-c", supportPath + "dbclient -y -y " + username + "@" + hostname + "/" + port};
-        String[] processArgs = BackgroundJob.setupProcessArgs(executablePath, dbclientArgs, prefixPath);
+        String[] processArgs;
+        if (intentCommand != null) {
+            String[] commandArgs = intentCommand.toArray(new String[0]);
+            processArgs = BackgroundJob.setupProcessArgs(executablePath, commandArgs, prefixPath);
+        } else {
+            // TODO: Replace -y -y option with a way to support hostkey checking
+            String[] dbclientArgs = {"sh", "-c", supportPath + "dbclient -y -y " + username + "@" + hostname + "/" + port};
+            processArgs = BackgroundJob.setupProcessArgs(executablePath, dbclientArgs, prefixPath);
+        }
         executablePath = processArgs[0];
         int lastSlashIndex = executablePath.lastIndexOf('/');
         String processName = (isLoginShell ? "-" : "") +

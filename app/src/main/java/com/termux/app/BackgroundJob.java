@@ -163,7 +163,7 @@ public final class BackgroundJob {
             environment.add("LD_LIBRARY_PATH=" + files_path + "/support");
             environment.add("LANG=en_US.UTF-8");
             environment.add("PATH=" + prefix_path + "/bin");
-            environment.add("PWD=" + cwd);
+            environment.add("PWD=" + home_path);
             environment.add("TMPDIR=" + prefix_path + "/tmp");
             environment.add("DROPBEAR_PASSWORD=" + password);
         }
