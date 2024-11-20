@@ -260,9 +260,9 @@ public final class TermuxService extends Service implements SessionChangedCallba
 
         for (String shellBinary : new String[]{"busybox"}) {
             File shellFile = new File(supportPath + shellBinary);
-            if (shellFile.canExecute()) {
+            //if (shellFile.canExecute()) {
                 executablePath = shellFile.getAbsolutePath();
-            }
+            //}
             break;
         }
 
