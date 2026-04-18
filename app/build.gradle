@@ -40,6 +40,16 @@ android {
         }
     }
 
+    flavorDimensions "app"
+    productFlavors {
+        UserLAnd {
+            dimension "app"
+        }
+        GIMP {
+            dimension "app"
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
