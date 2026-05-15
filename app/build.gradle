@@ -42,10 +42,40 @@ android {
 
     flavorDimensions "app"
     productFlavors {
-        UserLAnd {
+        Andacious {
+            dimension "app"
+        }
+        BirdBox {
+            dimension "app"
+        }
+        FoxBox {
             dimension "app"
         }
         GIMP {
+            dimension "app"
+        }
+        IDLE {
+            dimension "app"
+        }
+        Inky {
+            dimension "app"
+        }
+        LibreDocs {
+            dimension "app"
+        }
+        Octave {
+            dimension "app"
+        }
+        R {
+            dimension "app"
+        }
+        deVStudio {
+            dimension "app"
+        }
+        gnuplot {
+            dimension "app"
+        }
+        UserLAnd {
             dimension "app"
         }
     }
