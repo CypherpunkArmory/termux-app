@@ -42,6 +42,9 @@ android {
 
     flavorDimensions "app"
     productFlavors {
+        AiCLI {
+            dimension "app"
+        }
         Andacious {
             dimension "app"
         }
