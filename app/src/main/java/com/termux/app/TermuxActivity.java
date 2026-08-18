@@ -106,6 +106,21 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
 
     private static final String BROADCAST_TERMUX_OPENED = "com.termux.app.OPENED";
 
+    // Sent by ServerService.killSession() when the user stops an SSH session from UserLAnd's
+    // Sessions tab, so this activity closes instead of sitting around showing a dead terminal
+    // the next time a session is started. Registered/unregistered in onCreate()/onDestroy()
+    // (not onStart()/onStop() like mBroadcastReceiever below) since the user is normally *not*
+    // looking at this activity when they stop a session -- they're back in UserLAnd's own UI --
+    // so it has to keep listening while merely backgrounded, not just while visible.
+    private static final String USERLAND_CLOSE_TERMINAL_ACTION = "tech.ula.CLOSE_TERMINAL";
+
+    private final BroadcastReceiver mCloseReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            finish();
+        }
+    };
+
     /** The main view of the activity showing the terminal. Initialized in onCreate(). */
     @SuppressWarnings("NullableProblems")
     @NonNull
@@ -341,6 +356,22 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
         checkForFontAndColors();
 
         mBellSoundId = mBellSoundPool.load(this, R.raw.bell, 1);
+
+        // RECEIVER_EXPORTED, not RECEIVER_NOT_EXPORTED like mBroadcastReceiever below -- confirmed
+        // live that NOT_EXPORTED silently drops this broadcast (dumpsys showed the filter
+        // correctly registered under this same app's pid/uid, yet every dispatch attempt still
+        // showed terminalCount=0 and never actually reached onReceive()). The two receivers are
+        // registered from different Context instances -- ServerService (a Service) sending to an
+        // Activity's dynamically registered receiver isn't treated as "same app" for
+        // NOT_EXPORTED's purposes the way sending within a single Activity's own process appears
+        // to be. Exporting this is low-risk regardless: the action just closes this activity, no
+        // data in the payload, so the worst an external sender could do is prematurely close the
+        // user's own terminal.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            registerReceiver(mCloseReceiver, new IntentFilter(USERLAND_CLOSE_TERMINAL_ACTION), RECEIVER_EXPORTED);
+        } else {
+            registerReceiver(mCloseReceiver, new IntentFilter(USERLAND_CLOSE_TERMINAL_ACTION));
+        }
 
         sendOpenedBroadcast();
     }
@@ -681,6 +712,7 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
             mTermService = null;
         }
         unbindService(this);
+        unregisterReceiver(mCloseReceiver);
     }
 
     DrawerLayout getDrawer() {
