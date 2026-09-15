@@ -346,6 +346,9 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
         serviceIntent.putExtra("hostname", hostname);
         serviceIntent.putExtra("port", port);
         serviceIntent.putExtra("sessionName", sessionName);
+        // Optional: set by ServerService for VM-backed sessions only. Forwarded verbatim so
+        // TermuxService can print it before dbclient starts connecting -- see its use there.
+        serviceIntent.putExtra("bootMessage", getIntent().getStringExtra("bootMessage"));
         serviceIntent.setAction(TermuxService.ACTION_EXECUTE);
 
         // Start the service and make it run regardless of who is bound to it:

@@ -80,6 +80,8 @@ public final class TermuxService extends Service implements SessionChangedCallba
     String port = "";
     String sessionName = "";
     String password = "";
+    /** Optional line printed in the terminal before connecting; see createTermSession(). */
+    String bootMessage = null;
 
     /**
      * The terminal sessions which this service manages.
@@ -139,6 +141,7 @@ public final class TermuxService extends Service implements SessionChangedCallba
             hostname = intent.getStringExtra("hostname");
             port = intent.getStringExtra("port");
             sessionName = intent.getStringExtra("sessionName");
+            bootMessage = intent.getStringExtra("bootMessage");
 
             if (username.isEmpty() || password.isEmpty() || hostname.isEmpty() || port.isEmpty() || sessionName.isEmpty()) {
                 Log.e(EmulatorDebug.LOG_TAG, "Currently only intents from UserLAnd are supported");
@@ -267,7 +270,17 @@ public final class TermuxService extends Service implements SessionChangedCallba
         }
 
         // TODO: Replace -y -y option with a way to support hostkey checking
-        String[] dbclientArgs = {"sh", "-c", supportPath + "dbclient -y -y " + username + "@" + hostname + "/" + port};
+        String dbclientCmd = supportPath + "dbclient -y -y " + username + "@" + hostname + "/" + port;
+        // For VM-backed sessions ServerService hands us a line to show first. The guest is still
+        // booting when this activity opens, so dbclient can sit connecting for several seconds
+        // with nothing on screen but a cursor; printing this makes that wait legible instead of
+        // looking like a hang. Single-quoted for the shell, with any embedded quote closed and
+        // re-opened the usual way, because the text is localized and not under our control.
+        if (bootMessage != null && !bootMessage.isEmpty()) {
+            String escaped = bootMessage.replace("'", "'\\''");
+            dbclientCmd = "printf '%s\\n' '" + escaped + "'; " + dbclientCmd;
+        }
+        String[] dbclientArgs = {"sh", "-c", dbclientCmd};
         String[] processArgs = BackgroundJob.setupProcessArgs(executablePath, dbclientArgs, prefixPath);
         executablePath = processArgs[0];
         int lastSlashIndex = executablePath.lastIndexOf('/');
